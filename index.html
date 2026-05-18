@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ESM Stock Dashboard</title>
+<!-- Auto-load version: keep Stock_Report_Latest.xlsx in the same folder as this HTML file. -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --navy:#1f2f75;
+  --blue:#2554a4;
+  --light:#f4f7fb;
+  --card:#ffffff;
+  --border:#d8dee9;
+  --muted:#6b7280;
+  --green:#0f766e;
+  --orange:#f97316;
+}
+*{box-sizing:border-box}
+body {
+  margin:0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--light);
+  color:#111827;
+  height:100vh;
+  overflow:hidden;
+}
+.wrap {
+  max-width: 1600px;
+  height:100vh;
+  margin: 0 auto;
+  padding: 10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.top {
+  display:flex;
+  align-items:center;
+  gap:16px;
+  background:#fff;
+  border-radius:12px;
+  padding:8px 12px;
+  box-shadow:0 4px 16px rgba(31,47,117,.08);
+  border:1px solid var(--border);
+}
+.logoBox {
+  width:190px;
+  height:74px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-right:1px solid var(--border);
+  padding-right:14px;
+}
+.logoBox img {
+  max-width:180px;
+  max-height:68px;
+  object-fit:contain;
+}
+.logoFallback {
+  font-size:28px;
+  font-weight:800;
+  color:var(--navy);
+}
+.title h1 {
+  margin:0;
+  font-size:20px;
+  color:var(--navy);
+}
+.title p {
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:11px;
+}
+.upload {
+  margin-left:auto;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+input[type=file], select {
+  border:1px solid var(--border);
+  padding:5px 6px;
+  border-radius:8px;
+  background:#fff;
+}
+.btn {
+  border:0;
+  background:var(--navy);
+  color:#fff;
+  padding:7px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+}
+.btn.secondary {
+  background:#e8eef8;
+  color:var(--navy);
+  width:100%;
+}
+.notice {
+  background:#fff7ed;
+  border:1px solid #fdba74;
+  color:#7c2d12;
+  padding:10px 12px;
+  border-radius:10px;
+  margin:12px 0;
+  font-size:11px;
+}
+.cards {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:0;
+}
+.card {
+  background:linear-gradient(135deg,#ffffff 0%,#f7faff 100%);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 14px;
+  box-shadow:0 6px 18px rgba(31,47,117,.07);
+  cursor:pointer;
+  transition:.15s ease;
+}
+.card:hover {
+  transform:translateY(-1px);
+  box-shadow:0 8px 22px rgba(31,47,117,.12);
+}
+.card.activeKpi {
+  outline:3px solid var(--orange);
+  border-color:var(--orange);
+}
+.label {
+  font-size:11px;
+  color:var(--muted);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+.value {
+  margin-top:8px;
+  font-size:22px;
+  font-weight:800;
+  color:var(--navy);
+}
+.sub {
+  margin-top:5px;
+  font-size:10.5px;
+  color:var(--muted);
+}
+.grid {
+  display:grid;
+  grid-template-columns: 300px 1fr;
+  gap:10px;
+  flex:1;
+  min-height:0;
+}
+.filters, .tableWrap {
+  min-height:0;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:0 4px 14px rgba(31,47,117,.05);
+}
+.filters {
+  padding:10px;
+  overflow-y:auto;
+  max-height:calc(100vh - 235px);
+}
+.filters h2, .tableHead h2 {
+  font-size:14px;
+  margin:0 0 8px;
+  color:var(--navy);
+}
+.filterBox {
+  margin-top:6px;
+  border-top:1px solid #eef2f7;
+  padding-top:6px;
+}
+.filterTitle {
+  font-size:11px;
+  font-weight:800;
+  margin-bottom:8px;
+  color:#374151;
+}
+.slicer {
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  max-height:135px;
+  overflow:auto;
+}
+.chip {
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:4px 7px;
+  background:#eef5ff;
+  color:#374151;
+  cursor:pointer;
+  font-size:11px;
+  user-select:none;
+}
+.chip.active {
+  background:var(--navy);
+  color:#fff;
+  border-color:var(--navy);
+}
+.chip.all {
+  background:#fff;
+}
+.chip.all.active {
+  background:#111827;
+  color:#fff;
+}
+.foot {
+  font-size:10.5px;
+  color:var(--muted);
+  margin-top:6px;
+  line-height:1.25;
+}
+.tableWrap {
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.tableHead {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border-bottom:1px solid var(--border);
+}
+.tableTitleArea {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.activeNote {
+  color:var(--orange);
+  font-size:10.5px;
+  font-weight:700;
+}
+.search {
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  width:220px;
+}
+.count {
+  font-size:11px;
+  color:var(--muted);
+  margin-left:8px;
+}
+.tableScroll {
+  flex:1;
+  min-height:0;
+  overflow:auto;
+}
+table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+}
+thead th {
+  background:var(--navy);
+  color:#fff;
+  padding:7px 6px;
+  border-right:1px solid #2d3f8d;
+  text-align:left;
+  position:sticky;
+  top:0;
+  z-index:5;
+  white-space:nowrap;
+}
+th .thWrap {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+}
+.excelFilterBtn {
+  border:1px solid rgba(255,255,255,.4);
+  background:#ffffff;
+  color:#111827;
+  border-radius:4px;
+  padding:1px 5px;
+  cursor:pointer;
+  font-size:11px;
+  line-height:16px;
+}
+.excelFilterBtn.active {
+  background:#f97316;
+  color:#fff;
+  border-color:#f97316;
+}
+.filterPopup {
+  position:absolute;
+  background:#fff;
+  color:#111827;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
+  width:280px;
+  max-height:360px;
+  z-index:1000;
+  padding:10px;
+  display:none;
+}
+.filterPopup .searchMini {
+  width:100%;
+  padding:7px;
+  border:1px solid #cbd5e1;
+  border-radius:6px;
+  margin-bottom:8px;
+}
+.filterPopup .checkList {
+  max-height:210px;
+  overflow:auto;
+  border:1px solid #e5e7eb;
+  padding:6px;
+  border-radius:6px;
+  font-size:10.5px;
+}
+.filterPopup label {
+  display:block;
+  padding:4px 2px;
+  cursor:pointer;
+}
+.filterPopup .popupActions {
+  display:flex;
+  justify-content:flex-end;
+  gap:6px;
+  margin-top:8px;
+}
+.filterPopup button {
+  border:0;
+  border-radius:6px;
+  padding:4px 7px;
+  cursor:pointer;
+  font-size:10.5px;
+}
+.filterPopup .applyBtn {
+  background:var(--navy);
+  color:#fff;
+}
+.filterPopup .clearMiniBtn {
+  background:#e5e7eb;
+  color:#111827;
+}
+tbody td {
+  padding:5px 6px;
+  border-bottom:1px solid #e5e7eb;
+  border-right:1px solid #edf0f4;
+  vertical-align:top;
+}
+tbody tr:nth-child(even) {
+  background:#fafafa;
+}
+tfoot td {
+  background:#e8eef8;
+  color:#111827;
+  font-weight:800;
+  padding:7px 6px;
+  border-top:2px solid var(--navy);
+  border-right:1px solid #cfd8e8;
+  position:sticky;
+  bottom:0;
+  z-index:2;
+}
+.num {
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.hide {
+  display:none;
+}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .cards{grid-template-columns:1fr}
+  .upload{margin-left:0}
+  .top{flex-wrap:wrap}
+  .search{width:180px}
+}
+
+@media(max-width:768px){
+  body{
+    height:auto;
+    overflow:auto;
+  }
+  .wrap{
+    height:auto;
+    padding:8px;
+    gap:8px;
+  }
+  .top{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    padding:10px;
+  }
+  .logoBox{
+    width:100%;
+    height:70px;
+    border-right:0;
+    border-bottom:1px solid var(--border);
+    padding-right:0;
+    padding-bottom:8px;
+    justify-content:flex-start;
+  }
+  .logoBox img{
+    max-width:190px;
+    max-height:60px;
+  }
+  .title h1{
+    font-size:18px;
+  }
+  .title p{
+    font-size:11px;
+  }
+  .upload{
+    width:100%;
+    margin-left:0;
+  }
+  .upload input,
+  .upload select,
+  .upload button{
+    width:100%;
+  }
+  .notice{
+    font-size:10.5px;
+    padding:6px 8px;
+  }
+  .cards{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .card{
+    padding:10px 12px;
+  }
+  .label{
+    font-size:10px;
+  }
+  .value{
+    font-size:22px;
+  }
+  .grid{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .filters{
+    max-height:none;
+    overflow:visible;
+  }
+  .filterBox{
+    margin-top:6px;
+    padding-top:6px;
+  }
+  .slicer{
+    max-height:95px;
+    overflow:auto;
+  }
+  .chip{
+    font-size:10.5px;
+    padding:4px 7px;
+  }
+  .tableHead{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+  }
+  .search{
+    width:100%;
+  }
+  .tableWrap{
+    min-height:430px;
+  }
+  .tableScroll{
+    height:420px;
+    overflow:auto;
+  }
+  table{
+    min-width:900px;
+    font-size:10.5px;
+  }
+  thead th{
+    padding:6px 5px;
+  }
+  tbody td{
+    padding:5px;
+  }
+  tfoot td{
+    padding:6px 5px;
+  }
+  .filterPopup{
+    width:92vw;
+    left:4vw !important;
+    max-height:70vh;
+  }
+}
+
+@media(max-width:480px){
+  .cards{
+    grid-template-columns:1fr;
+  }
+  .value{
+    font-size:20px;
+  }
+  .tableScroll{
+    height:390px;
+  }
+  table{
+    min-width:850px;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logoBox">
+      <img src='data:image/png;base64,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' alt='Evyap Logo'/>
+    </div>
+    <div class="title">
+      <h1>ESM Supply Chain Cockpit</h1>
+      <p>FMCG Stock Report</p>
+    </div>
+    <div class="upload">
+      <div id="dataStatus" style="font-size:11px;color:#6b7280;">Data source: Stock_Report_Latest.xlsx</div>
+      <input id="fileInput" class="hide" type="file" accept=".xlsx,.xls,.csv" />
+      <select id="sheetSelect" class="hide"></select>
+      <button class="btn" id="loadBtn">Refresh Dashboard</button>
+    </div>
+  </div>
+
+  <div id="warning" class="notice">
+    This dashboard automatically reads <b>Stock_Report_Latest.xlsx</b> from the same folder. Required columns:
+    <b>Material</b>, <b>Description</b>, <b>S&amp;OP Cat</b>, <b>Mat type</b>, <b>Analysis</b>, <b>Brand</b>,
+    <b>UU</b>, <b>QI</b>, <b>Blocked</b>, <b>Total Stock Reporting UoM</b>, and
+    <b>Actual Stock (Global Code Currency)</b>.
+  </div>
+
+  <div class="cards">
+    <div class="card" id="valueCard" data-kpi="all" title="Click to show all stock">
+      <div class="label">Total Stock Value USD</div>
+      <div class="value" id="kpiValue">0.00</div>
+      
+    </div>
+    <div class="card" id="stockCard" data-kpi="all" title="Click to show all stock">
+      <div class="label">Total Stock Amount KG</div>
+      <div class="value" id="kpiStock">0</div>
+      
+    </div>
+    <div class="card" id="blockedCard" data-kpi="blocked" title="Click to show only blocked stock SKUs">
+      <div class="label">Block Stock KG</div>
+      <div class="value" id="kpiBlocked">0</div>
+      
+    </div>
+  </div>
+
+  <div class="grid">
+    <aside class="filters">
+      <h2>Selection Cards</h2>
+      <button class="btn secondary" id="clearBtn">Clear All Selections</button>
+
+      <div class="filterBox">
+        <div class="filterTitle">S&amp;OP Category</div>
+        <div class="slicer" id="catSlicer"></div>
+      </div>
+
+      <div class="filterBox">
+        <div class="filterTitle">Stock Type</div>
+        <div class="slicer" id="typeSlicer"></div>
+      </div>
+
+      <div class="filterBox">
+        <div class="filterTitle">Stock Analysis</div>
+        <div class="slicer" id="analysisSlicer"></div>
+      </div>
+
+      <div class="filterBox">
+        <div class="filterTitle">Brand</div>
+        <div class="slicer" id="brandSlicer"></div>
+      </div>
+
+      <div class="foot">Click one or more slicer cards. No selection = show all. Header ▼ filters support Excel-style multiple checkbox selection for SKU, Description, and UoM. Click Block Stock KG card to show only SKUs with blocked stock.</div>
+    </aside>
+
+    <main class="tableWrap">
+      <div class="tableHead">
+        <div class="tableTitleArea">
+          <h2>Stock Detail List</h2>
+          <div id="activeNote" class="activeNote hide">Showing SKUs with blocked stock only</div>
+        </div>
+        <div>
+          <input id="searchBox" class="search" placeholder="Search SKU / description..." />
+          <span class="count" id="rowCount">0 rows</span>
+        </div>
+      </div>
+      <div class="tableScroll">
+        <table id="dataTable">
+          <thead></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+let workbook = null;
+let rawRows = [];
+let headers = [];
+let active = { cat:new Set(), type:new Set(), analysis:new Set(), brand:new Set() };
+let kpiFilter = 'all';
+let tableFilters = {}; // Excel-style multi checkbox filters for SKU, Description, UoM
+let pendingFilter = { col:null, selected:new Set() };
+const DATA_FILE_URL = 'Stock_Report_Latest.xlsx';
+
+const names = {
+  sku:['Material','SKU','Global Code','Code'],
+  desc:['Description','Material Description','Global Code Description'],
+  cat:['S&OP Cat','SOP Cat','S&OP Category','Stock Category'],
+  type:['Mat type','Hard Mat Type','Stock Type','Product Type'],
+  brand:['Brand'],
+  uom:['UoM','UOM'],
+  analysis:['Analysis','analysis','Stock Analysis'],
+  uu:['UU','Unrestricted','Unrestricted Use','Unrestricted Stock'],
+  qi:['QI','Quality Inspection','Quality Inspection Stock'],
+  blocked:['Blocked','Blocked Reporting UoM','Block Stock KG'],
+  stock:['Total Stock Reporting UoM','Total Stock Amount KG'],
+  value:['Actual Stock (Global Code Currency)','Total Stock Value USD']
+};
+
+function norm(s) {
+  return String(s ?? '').trim().toLowerCase().replace(/\s+/g,' ');
+}
+
+function findHeader(list) {
+  const map = Object.fromEntries(headers.map(h => [norm(h), h]));
+  for (const n of list) {
+    if (map[norm(n)]) return map[norm(n)];
+  }
+  return null;
+}
+
+function getCols() {
+  const out = {};
+  Object.keys(names).forEach(k => out[k] = findHeader(names[k]));
+  return out;
+}
+
+function num(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  let s = String(v).replace(/,/g,'').replace(/\((.*)\)/,'-$1');
+  let n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function fmtQty(n) {
+  return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits:0, minimumFractionDigits:0 });
+}
+
+function fmtUSD(n) {
+  return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits:0, minimumFractionDigits:0 });
+}
+
+function unique(col) {
+  if (!col) return [];
+  return [...new Set(rawRows.map(r => String(r[col] ?? '').trim()).filter(Boolean))]
+    .sort((a,b) => a.localeCompare(b));
+}
+
+function readSheet(name) {
+  const ws = workbook.Sheets[name];
+  rawRows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+  headers = rawRows.length ? Object.keys(rawRows[0]) : [];
+  active.cat.clear();
+  active.type.clear();
+  active.analysis.clear();
+  active.brand.clear();
+  tableFilters = {};
+  kpiFilter = 'all';
+  buildAll();
+}
+
+function buildSlicer(id, col, setKey) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+
+  const all = document.createElement('div');
+  all.className = 'chip all ' + (active[setKey].size ? '' : 'active');
+  all.textContent = 'All';
+  all.onclick = () => { active[setKey].clear(); render(); };
+  el.appendChild(all);
+
+  unique(col).forEach(v => {
+    const c = document.createElement('div');
+    c.className = 'chip ' + (active[setKey].has(v) ? 'active' : '');
+    c.textContent = v;
+    c.onclick = () => {
+      active[setKey].has(v) ? active[setKey].delete(v) : active[setKey].add(v);
+      render();
+    };
+    el.appendChild(c);
+  });
+}
+
+function buildAll() {
+  const h = getCols();
+  const required = ['sku','desc','cat','type','analysis','brand','uom','uu','qi','blocked','stock','value'];
+  const missing = required.filter(k => !h[k]);
+
+  const warn = document.getElementById('warning');
+  warn.classList.toggle('hide', missing.length === 0);
+  if (missing.length) {
+    warn.innerHTML = 'Missing column(s): <b>' + missing.map(k => names[k][0]).join(', ') + '</b>. Please check SAP extract header names.';
+  }
+
+  buildSlicer('catSlicer', h.cat, 'cat');
+  buildSlicer('typeSlicer', h.type, 'type');
+  buildSlicer('analysisSlicer', h.analysis, 'analysis');
+  buildSlicer('brandSlicer', h.brand, 'brand');
+  render();
+}
+
+function baseFilteredRows() {
+  const h = getCols();
+  const q = norm(document.getElementById('searchBox').value);
+
+  return rawRows.filter(r => {
+    if (active.cat.size && !active.cat.has(String(r[h.cat] ?? '').trim())) return false;
+    if (active.type.size && !active.type.has(String(r[h.type] ?? '').trim())) return false;
+    if (active.analysis.size && !active.analysis.has(String(r[h.analysis] ?? '').trim())) return false;
+    if (active.brand.size && !active.brand.has(String(r[h.brand] ?? '').trim())) return false;
+
+    if (q) {
+      const sku = String(r[h.sku] ?? '');
+      const desc = String(r[h.desc] ?? '');
+      if (!norm(sku + ' ' + desc).includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function groupedRows(rows, h) {
+  const map = new Map();
+
+  rows.forEach(r => {
+    const sku = String(r[h.sku] ?? '').trim();
+    const desc = String(r[h.desc] ?? '').trim();
+    const key = [sku, desc].join('||');
+
+    if (!map.has(key)) {
+      map.set(key, { sku, desc, uom:String(r[h.uom] ?? '').trim(), uu:0, qi:0, blocked:0, stock:0, value:0, stockKG:0 });
+    }
+
+    const g = map.get(key);
+    g.uu += num(r[h.uu]);
+    g.qi += num(r[h.qi]);
+    g.blocked += num(r[h.blocked]);
+    if(String(r[h.uom]??'').trim().toUpperCase()=='KG'){g.stock += num(r[h.stock]);}
+    g.value += num(r[h.value]);
+  });
+
+  return [...map.values()].sort((a,b) =>
+    b.value - a.value
+  );
+}
+
+
+function tableColValue(g, col) {
+  const map = {
+    'SKU': g.sku,
+    'Description': g.desc,
+    'UoM': g.uom
+  };
+  return String(map[col] ?? '');
+}
+
+function applyExcelFilters(groups) {
+  return groups.filter(g => {
+    return Object.entries(tableFilters).every(([col, selectedArr]) => {
+      if (!selectedArr || selectedArr.length === 0) return true;
+      return selectedArr.includes(tableColValue(g, col));
+    });
+  });
+}
+
+function excelFilterButton(col) {
+  const activeClass = tableFilters[col] && tableFilters[col].length ? ' active' : '';
+  return '<button class="excelFilterBtn' + activeClass + '" data-col="' + col + '">▼</button>';
+}
+
+function buildExcelFilterPopup(sourceGroups) {
+  let popup = document.getElementById('filterPopup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'filterPopup';
+    popup.className = 'filterPopup';
+    document.body.appendChild(popup);
+  }
+
+  document.querySelectorAll('.excelFilterBtn').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      const col = btn.dataset.col;
+      const rect = btn.getBoundingClientRect();
+      openFilterPopup(col, sourceGroups, rect.left, rect.bottom + window.scrollY);
+    };
+  });
+}
+
+function openFilterPopup(col, sourceGroups, left, top) {
+  const popup = document.getElementById('filterPopup');
+  const values = [...new Set(sourceGroups.map(g => tableColValue(g, col)).filter(Boolean))]
+    .sort((a,b) => String(a).localeCompare(String(b)));
+
+  const current = tableFilters[col] ? new Set(tableFilters[col]) : new Set(values);
+  pendingFilter = { col, selected:new Set(current) };
+
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+  popup.style.display = 'block';
+
+  popup.innerHTML = `
+    <div style="font-weight:800;margin-bottom:6px;">Filter ${safe(col)}</div>
+    <input class="searchMini" id="popupSearch" placeholder="Search..." />
+    <label style="font-weight:700;border-bottom:1px solid #e5e7eb;margin-bottom:4px;">
+      <input type="checkbox" id="selectAllBox" ${pendingFilter.selected.size === values.length ? 'checked' : ''}> Select All
+    </label>
+    <div class="checkList" id="popupCheckList"></div>
+    <div class="popupActions">
+      <button class="clearMiniBtn" id="clearPopup">Clear</button>
+      <button class="applyBtn" id="applyPopup">Apply</button>
+    </div>
+  `;
+
+  function renderList(filterText='') {
+    const filtered = values.filter(v => String(v).toLowerCase().includes(filterText.toLowerCase()));
+    document.getElementById('popupCheckList').innerHTML = filtered.map(v => `
+      <label><input type="checkbox" class="popupCheck" value="${safe(v)}" ${pendingFilter.selected.has(v) ? 'checked' : ''}> ${safe(v)}</label>
+    `).join('');
+
+    document.querySelectorAll('.popupCheck').forEach(chk => {
+      chk.onchange = ev => {
+        if (ev.target.checked) pendingFilter.selected.add(ev.target.value);
+        else pendingFilter.selected.delete(ev.target.value);
+        document.getElementById('selectAllBox').checked = pendingFilter.selected.size === values.length;
+      };
+    });
+  }
+
+  renderList();
+
+  document.getElementById('popupSearch').oninput = e => renderList(e.target.value);
+
+  document.getElementById('selectAllBox').onchange = e => {
+    if (e.target.checked) pendingFilter.selected = new Set(values);
+    else pendingFilter.selected.clear();
+    renderList(document.getElementById('popupSearch').value);
+  };
+
+  document.getElementById('clearPopup').onclick = () => {
+    delete tableFilters[col];
+    popup.style.display = 'none';
+    render();
+  };
+
+  document.getElementById('applyPopup').onclick = () => {
+    if (pendingFilter.selected.size === values.length || pendingFilter.selected.size === 0) {
+      delete tableFilters[col];
+    } else {
+      tableFilters[col] = [...pendingFilter.selected];
+    }
+    popup.style.display = 'none';
+    render();
+  };
+}
+
+document.addEventListener('click', e => {
+  const popup = document.getElementById('filterPopup');
+  if (popup && popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('excelFilterBtn')) {
+    popup.style.display = 'none';
+  }
+});
+
+function render() {
+  const h = getCols();
+
+  buildSlicer('catSlicer', h.cat, 'cat');
+  buildSlicer('typeSlicer', h.type, 'type');
+  buildSlicer('analysisSlicer', h.analysis, 'analysis');
+  buildSlicer('brandSlicer', h.brand, 'brand');
+
+  const baseRows = baseFilteredRows();
+  const baseGroups = groupedRows(baseRows, h);
+  const kpiGroups = kpiFilter === 'blocked' ? baseGroups.filter(g => g.blocked > 0) : baseGroups;
+  const tableGroups = applyExcelFilters(kpiGroups);
+
+  document.getElementById('kpiValue').textContent = fmtUSD(baseRows.reduce((s,r) => s + num(r[h.value]), 0));
+  document.getElementById('kpiStock').textContent = fmtQty(baseRows.reduce((s,r) => s + num(r[h.stock]), 0));
+  document.getElementById('kpiBlocked').textContent = fmtQty(baseRows.reduce((s,r) => s + num(r[h.blocked]), 0));
+
+  document.getElementById('rowCount').textContent = tableGroups.length + ' combined SKU rows';
+  document.getElementById('blockedCard').classList.toggle('activeKpi', kpiFilter === 'blocked');
+  document.getElementById('activeNote').classList.toggle('hide', kpiFilter !== 'blocked');
+
+  const cols = ['SKU','Description','UoM','UU','QI','Blocked','Total Stock Amount KG','Total Stock Value USD'];
+  const excelCols = ['SKU','Description','UoM'];
+  document.querySelector('#dataTable thead').innerHTML =
+    '<tr>' + cols.map(c =>
+      '<th><div class="thWrap"><span>' + c + '</span>' + (excelCols.includes(c) ? excelFilterButton(c) : '') + '</div></th>'
+    ).join('') + '</tr>';
+
+  document.querySelector('#dataTable tbody').innerHTML = tableGroups.map(g =>
+    '<tr>' +
+      '<td>' + safe(g.sku) + '</td>' +
+      '<td>' + safe(g.desc) + '</td>' +
+      '<td>' + safe(g.uom) + '</td>' +
+      '<td class="num">' + fmtQty(g.uu) + '</td>' +
+      '<td class="num">' + fmtQty(g.qi) + '</td>' +
+      '<td class="num">' + fmtQty(g.blocked) + '</td>' +
+      '<td class="num">' + fmtQty(g.stock) + '</td>' +
+      '<td class="num">' + fmtUSD(g.value) + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const total = tableGroups.reduce((a,g) => {
+    a.uu += g.uu;
+    a.qi += g.qi;
+    a.blocked += g.blocked;
+    a.stock += g.stock;
+    a.value += g.value;
+    return a;
+  }, {uu:0, qi:0, blocked:0, stock:0, value:0});
+
+  document.querySelector('#dataTable tfoot').innerHTML =
+    '<tr>' +
+      '<td colspan="3">Grand Total</td>' +
+      '<td class="num">' + fmtQty(total.uu) + '</td>' +
+      '<td class="num">' + fmtQty(total.qi) + '</td>' +
+      '<td class="num">' + fmtQty(total.blocked) + '</td>' +
+      '<td class="num">' + fmtQty(total.stock) + '</td>' +
+      '<td class="num">' + fmtUSD(total.value) + '</td>' +
+    '</tr>';
+
+  buildExcelFilterPopup(kpiGroups);
+}
+
+function safe(v) {
+  return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+async function loadFixedExcelFile() {
+  const status = document.getElementById('dataStatus');
+  try {
+    status.textContent = 'Loading Stock_Report_Latest.xlsx...';
+
+    const response = await fetch(DATA_FILE_URL, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('Unable to load fixed Excel file. Make sure Stock_Report_Latest.xlsx is in the same folder as this HTML file.');
+    }
+
+    const data = await response.arrayBuffer();
+    workbook = XLSX.read(data, { type:'array' });
+
+    const sel = document.getElementById('sheetSelect');
+    sel.innerHTML = '';
+    workbook.SheetNames.forEach(n => {
+      const o = document.createElement('option');
+      o.value = n;
+      o.textContent = n;
+      sel.appendChild(o);
+    });
+
+    sel.classList.toggle('hide', workbook.SheetNames.length <= 1);
+    readSheet(workbook.SheetNames[0]);
+
+    const now = new Date();
+    status.textContent = 'Loaded: Stock_Report_Latest.xlsx | ' + now.toLocaleString();
+  } catch (err) {
+    document.getElementById('fileInput').classList.remove('hide');
+
+    if (window.location.protocol === 'file:') {
+      status.textContent = 'Local test mode: choose Excel file to load dashboard';
+      document.getElementById('warning').classList.add('hide');
+    } else {
+      status.textContent = 'Could not auto-load Stock_Report_Latest.xlsx';
+      document.getElementById('warning').classList.remove('hide');
+      document.getElementById('warning').innerHTML =
+        '<b>Auto-load failed.</b> Please confirm <b>Stock_Report_Latest.xlsx</b> is in the same hosted folder as this dashboard, and that browser/SharePoint permission allows the file to be read.';
+    }
+
+    console.error(err);
+  }
+}
+
+document.getElementById('fileInput').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+
+  const data = await f.arrayBuffer();
+  workbook = XLSX.read(data, { type:'array' });
+
+  const sel = document.getElementById('sheetSelect');
+  sel.innerHTML = '';
+  workbook.SheetNames.forEach(n => {
+    const o = document.createElement('option');
+    o.value = n;
+    o.textContent = n;
+    sel.appendChild(o);
+  });
+
+  sel.classList.toggle('hide', workbook.SheetNames.length <= 1);
+  readSheet(workbook.SheetNames[0]);
+
+  document.getElementById('dataStatus').textContent = 'Loaded manually: ' + f.name + ' | ' + new Date().toLocaleString();
+  document.getElementById('warning').classList.add('hide');
+});
+
+document.getElementById('sheetSelect').onchange = e => readSheet(e.target.value);
+
+document.getElementById('loadBtn').onclick = () => {
+  if (window.location.protocol === 'file:') {
+    document.getElementById('fileInput').click();
+  } else {
+    loadFixedExcelFile();
+  }
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.location.protocol === 'file:') {
+    document.getElementById('fileInput').classList.remove('hide');
+    document.getElementById('dataStatus').textContent = 'Local test mode: choose Excel file to load dashboard';
+    document.getElementById('warning').classList.add('hide');
+  } else {
+    loadFixedExcelFile();
+  }
+});
+
+document.getElementById('clearBtn').onclick = () => {
+  active.cat.clear();
+  active.type.clear();
+  active.analysis.clear();
+  active.brand.clear();
+  tableFilters = {};
+  kpiFilter = 'all';
+  render();
+};
+
+document.getElementById('searchBox').oninput = render;
+
+document.getElementById('blockedCard').onclick = () => {
+  kpiFilter = kpiFilter === 'blocked' ? 'all' : 'blocked';
+  render();
+};
+
+document.getElementById('valueCard').onclick = () => {
+  kpiFilter = 'all';
+  render();
+};
+
+document.getElementById('stockCard').onclick = () => {
+  kpiFilter = 'all';
+  render();
+};
+</script>
+</body>
+</html>
